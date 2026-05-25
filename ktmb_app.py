@@ -69,9 +69,23 @@ df_result['date'] = pd.to_datetime(df_result['date'])
 df_result['ridership'] = pd.to_numeric(df_result['ridership'], errors='coerce')
 df_result['predict_ridership'] = pd.to_numeric(df_result['predict_ridership'], errors='coerce')
 
+# Convert date (ensure datetime)
+df_result['date'] = pd.to_datetime(df_result['date'])
+
+# Get latest month
+latest_date = df_result['date'].max()
+latest_month = latest_date.month
+latest_year = latest_date.year
+
+# Filter latest month
+df_latest_month = df_result[
+    (df_result['date'].dt.month == latest_month) &
+    (df_result['date'].dt.year == latest_year)
+]
+
 # Show table
 st.subheader("Data Table")
-st.dataframe(df_result)
+st.dataframe(df_result, hide_index=True)
 
 # Date range filter
 min_date = df_result['date'].min()
@@ -84,7 +98,6 @@ date_range = st.date_input(
     max_value=max_date
 )
 
-# Apply filter
 if len(date_range) == 2:
     start_date, end_date = date_range
     df_filtered = df_result[
