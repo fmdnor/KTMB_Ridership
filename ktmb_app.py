@@ -83,10 +83,6 @@ df_latest_month = df_result[
     (df_result['date'].dt.year == latest_year)
 ]
 
-# Show table
-st.subheader("Data Table")
-st.dataframe(df_result, hide_index=True)
-
 # Date range filter
 min_date = df_result['date'].min()
 max_date = df_result['date'].max()
@@ -131,3 +127,7 @@ line = base.mark_line(color='orange', strokeDash=[5,5], point=True).encode(
 chart = bar + line
 
 st.altair_chart(chart, use_container_width=True)
+
+# Show table
+st.subheader("Data Table")
+st.dataframe(df_result, hide_index=True)
