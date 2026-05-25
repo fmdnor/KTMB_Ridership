@@ -130,4 +130,4 @@ st.altair_chart(chart, use_container_width=True)
 
 # Show table
 st.subheader("Data Table")
-st.dataframe(df_result, hide_index=True)
+st.dataframe(df_filtered, hide_index=True)
