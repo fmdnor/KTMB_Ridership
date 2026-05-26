@@ -2,10 +2,41 @@ import pandas as pd
 from datetime import datetime, timedelta
 import streamlit as st
 import altair as alt
+from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 # ----------------------------
 # Forecast function
 # ----------------------------
+# SARIMA forecasting function
+def sarima_forecast(df, steps=5):
+    df = df.copy()
+
+    df_actual_data = df[df['ridership'].notna()].copy()
+
+    df_actual_data['date'] = pd.to_datetime(df_actual_data['date'])
+    df_actual_data.set_index('date', inplace=True)
+
+    model = SARIMAX(
+        df_actual_data['ridership'],
+        order=(1, 1, 1),
+        seasonal_order=(1, 1, 1, 7)
+    )
+
+    results = model.fit(disp=False)
+    forecast = results.forecast(steps=steps)
+
+    future_dates = pd.date_range(
+        start=df_actual_data.index[-1] + timedelta(days=1),
+        periods=steps
+    )
+
+    df_forecast = pd.DataFrame({
+        'date': future_dates,
+        'sarima_forecast': forecast.values
+    })
+
+    return df_forecast
+
 def data_by_service(df):
     df = df.copy()
 
@@ -103,30 +134,89 @@ if len(date_range) == 2:
 else:
     df_filtered = df_result
 
-# Plot
-st.subheader("Ridership Trend (Actual vs Predicted)")
-
 # Base chart
 base = alt.Chart(df_filtered)
 
-# Bar chart for actual
-bar = base.mark_bar(color='steelblue').encode(
+df_a = df_filtered[df_filtered['ridership'].notna()].copy()
+df_a['type'] = 'Actual'
+df_a = df_a[['date', 'ridership', 'type']]
+df_b = df_filtered[df_filtered['ridership'].isna()].copy()
+df_b['type'] = 'Moving average'
+df_b['ridership'] = df_b['predict_ridership'].copy()
+df_b = df_b[['date', 'ridership', 'type']]
+df_moving_average = pd.concat([df_a, df_b])
+
+# Ridership Moving Average
+st.subheader('Ridership moving average forecast.')
+
+# plot MA Chart
+ma_chart = alt.Chart(df_moving_average).mark_line(point=True).encode(
     x=alt.X('date:T', title='Date'),
     y=alt.Y('ridership:Q', title='Ridership'),
-    tooltip=['date:T', 'ridership:Q']
-)
-
-# Line chart for prediction
-line = base.mark_line(color='orange', strokeDash=[5,5], point=True).encode(
-    x='date:T',
-    y='predict_ridership:Q',
-    tooltip=['date:T', 'predict_ridership:Q']
+    color=alt.Color('type:N', title='Legend'),
+    strokeDash=alt.condition(
+        "datum.type == 'Moving average'",
+        alt.value([5, 5]),
+        alt.value([0])
+    ),
+    tooltip=['date:T', 'ridership:Q', 'type:N']
 ).interactive()
 
-# Combine both
-chart = bar + line
+st.altair_chart(ma_chart, use_container_width=True)
 
-st.altair_chart(chart, use_container_width=True)
+
+# # Bar chart for actual
+# bar = base.mark_bar(color='blue').encode(
+#     x=alt.X('date:T', title='Date'),
+#     y=alt.Y('ridership:Q', title='Ridership'),
+#     tooltip=['date:T', 'ridership:Q']
+# )
+#
+# # Line chart for prediction
+# line = base.mark_line(
+#     color='orange',
+#     strokeDash=[5, 5],
+#     point=True
+# ).encode(
+#     x='date:T',
+#     y='predict_ridership:Q',
+#     tooltip=['date:T', 'predict_ridership:Q']
+# ).interactive()
+#
+# # Combine both
+# chart = bar + line
+#
+# st.altair_chart(chart, use_container_width=True)
+
+# SARIMA Forecast.
+df_sarima = sarima_forecast(df_filtered)
+
+st.subheader("Ridership SARIMA Forecast.")
+
+df_sActual = df_filtered[df_filtered['ridership'].notna()][['date', 'ridership']]
+df_sActual['type'] = 'Actual'
+
+df_sarima_plot = df_sarima.copy()
+df_sarima_plot.rename(columns={'sarima_forecast': 'ridership'}, inplace=True)
+df_sarima_plot['type'] = 'SARIMA Forecast'
+
+df_combined = pd.concat([df_sActual, df_sarima_plot])
+df_combined.reset_index(drop=True, inplace=True)
+
+# SARIMA chart
+sarima_chart = alt.Chart(df_combined).mark_line(point=True).encode(
+    x=alt.X('date:T', title='Date'),
+    y=alt.Y('ridership:Q', title='Ridership'),
+    color=alt.Color('type:N', title='Legend'),
+    strokeDash=alt.condition(
+        "datum.type == 'SARIMA Forecast'",
+        alt.value([5, 5]),
+        alt.value([0])
+    ),
+    tooltip=['date:T', 'ridership:Q', 'type:N']
+).interactive()
+
+st.altair_chart(sarima_chart, use_container_width=True)
 
 # regression trend
 st.subheader("Regression Trend (Actual Data)")
@@ -144,7 +234,7 @@ regression_chart = alt.Chart(df_actual).mark_point(color='green').encode(
 ).mark_line(color='red').encode(
     x='date:T',
     y='ridership:Q'
-)
+).interactive()
 
 # show regression table
 st.altair_chart(regression_chart, use_container_width=True)
