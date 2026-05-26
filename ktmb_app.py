@@ -8,7 +8,7 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 # Forecast function
 # ----------------------------
 # SARIMA forecasting function
-def sarima_forecast(df, steps=5):
+def sarima_forecast(df, steps=7):
     df = df.copy()
 
     df_actual_data = df[df['ridership'].notna()].copy()
@@ -149,7 +149,7 @@ df_b = df_b[['date', 'ridership', 'type']]
 df_moving_average = pd.concat([df_a, df_b])
 
 # Ridership Moving Average
-st.subheader('Ridership moving average forecast.')
+st.subheader('Ridership moving average.')
 
 # plot MA Chart
 ma_chart = alt.Chart(df_moving_average).mark_line(point=True).encode(
