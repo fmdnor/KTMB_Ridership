@@ -128,6 +128,28 @@ chart = bar + line
 
 st.altair_chart(chart, use_container_width=True)
 
+# regression trend
+st.subheader("Regression Trend (Actual Data)")
+
+df_actual = df_filtered[df_filtered['ridership'].notna()]
+
+# regression chart
+regression_chart = alt.Chart(df_actual).mark_point(color='green').encode(
+    x=alt.X('date:T', title='date'),
+    y=alt.Y('ridership:Q', title='ridership'),
+    tooltip=['date:T', 'ridership:Q']
+) + alt.Chart(df_actual).transform_regression(
+    'date',
+    'ridership'
+).mark_line(color='red').encode(
+    x='date:T',
+    y='ridership:Q'
+)
+
+# show regression table
+st.altair_chart(regression_chart, use_container_width=True)
+
 # Show table
 st.subheader("Data Table")
 st.dataframe(df_filtered, hide_index=True)
+
