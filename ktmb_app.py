@@ -244,5 +244,6 @@ st.altair_chart(regression_chart, use_container_width=True)
 # Show table
 st.subheader("Data Table")
 df_filtered_ = df_filtered[['date', 'service', 'ridership']]
+df_filtered_['date'] = pd.to_datetime(['date']).dt.strftime('%Y-%m-%d')
 st.dataframe(df_filtered_, hide_index=True)
 
