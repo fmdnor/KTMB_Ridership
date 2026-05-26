@@ -241,5 +241,6 @@ st.altair_chart(regression_chart, use_container_width=True)
 
 # Show table
 st.subheader("Data Table")
-st.dataframe(df_filtered, hide_index=True)
+df_filtered_ = df_filtered[['date', 'service', 'ridership']]
+st.dataframe(df_filtered_, hide_index=True)
 
