@@ -35,6 +35,8 @@ def sarima_forecast(df, steps=5):
         'sarima_forecast': forecast.values
     })
 
+    df_forecast['sarima_forecast'] = round(df_forecast['sarima_forecast'], 2)
+
     return df_forecast
 
 def data_by_service(df):
